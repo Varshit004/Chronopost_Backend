@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronopost Tracking</title>
+</head>
+<body>
+    <h2>Track Your Chronopost Shipment</h2>
+    <form method="GET">
+        <label for="tracking_number">Enter Tracking Number:</label>
+        <input type="text" id="tracking_number" name="tracking_number" required>
+        <button type="submit">Track</button>
+    </form>
+
+    {% if tracking_info %}
+        <h3>Tracking Details:</h3>
+        {% if tracking_info.error %}
+            <p>Error: {{ tracking_info.error }}</p>
+        {% else %}
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Event</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for event in tracking_info.tab %}
+                        <tr>
+                            <td>{{ event.date }}</td>
+                            <td>{{ event.event }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    {% endif %}
+</body>
+</html>
