@@ -15,26 +15,28 @@
 
     {% if tracking_info %}
         <h3>Tracking Details:</h3>
-        {% if tracking_info.error %}
-            <p>Error: {{ tracking_info.error }}</p>
+        {% if tracking_info.0.error %}
+            <p>Error: {{ tracking_info.0.error }}</p>
         {% else %}
             <table border="1">
                 <thead>
                     <tr>
                         <th>Date & Time</th>
-                        <th>Event</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for event in tracking_info.tab %}
+                    {% for entry in tracking_info %}
                         <tr>
-                            <td>{{ event.date }}</td>
-                            <td>{{ event.event }}</td>
+                            <td>{{ entry.date_time }}</td>
+                            <td>{{ entry.status }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         {% endif %}
+    {% else %}
+        <p>No tracking information available.</p>
     {% endif %}
 </body>
 </html>
