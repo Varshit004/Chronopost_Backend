@@ -1,6 +1,7 @@
 import requests
+from bs4 import BeautifulSoup
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 
 def index(request):
     return HttpResponse("Welcome to the Tracking API!")
@@ -21,18 +22,43 @@ def track_view(request):
         "X-Requested-With": "XMLHttpRequest",
     }
 
-    try:     
+    try:
         response = session.get(chronopost_url, headers=headers, timeout=10)
 
-        if response.status_code == 200:
-            try:
-                tracking_data = response.json()
-            except ValueError:
-                tracking_data = {"error": "Invalid response format (not JSON).", "response_text": response.text}
-        else:
-            tracking_data = {"error": f"Failed to fetch tracking data. Status Code: {response.status_code}"}
+        if response.status_code != 200:
+            return render(request, "tracking/tracking.html", {"tracking_info": f"Failed to fetch tracking data. Status Code: {response.status_code}"})
+
+        try:
+            tracking_data = response.json()
+        except ValueError:
+            return render(request, "tracking/tracking.html", {"tracking_info": "Invalid response format (not JSON)."})
+
+        # Extract the tracking table HTML
+        tracking_html = tracking_data.get("tab", "")
+
+        # Parse HTML using BeautifulSoup
+        soup = BeautifulSoup(tracking_html, "html.parser")
+
+        # Find the tracking table
+        table = soup.find("table", {"id": "suiviTab"})
+        tracking_details = []
+
+        # Extract table rows (skip the header row)
+        if table:
+            rows = table.find_all("tr", class_="toggleElmt")
+            for row in rows:
+                cols = row.find_all("td")
+                if len(cols) >= 2:
+                    date_time = cols[0].get_text(strip=True)
+                    location_status = cols[1].get_text(strip=True)
+                    tracking_details.append({"date_time": date_time, "status": location_status})
+
+        # If no tracking details found, show message
+        if not tracking_details:
+            tracking_details = [{"date_time": "N/A", "status": "No tracking information available"}]
+
+        # Pass extracted tracking details to the template
+        return render(request, "tracking/tracking.html", {"tracking_info": tracking_details})
 
     except requests.exceptions.RequestException as e:
-        tracking_data = {"error": "Network error. Please try again later.", "details": str(e)}
-
-    return render(request, "tracking/tracking.html", {"tracking_info": tracking_data})
+        return render(request, "tracking/tracking.html", {"tracking_info": f"Network error. Please try again later. Details: {str(e)}"})
